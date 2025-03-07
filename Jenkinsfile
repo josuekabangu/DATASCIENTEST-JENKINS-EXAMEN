@@ -20,11 +20,38 @@ pipeline {
                             echo "Connexion à Docker Hub..."
                             docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASS
                             echo "Construction des images..."
-                            docker compose build
+                            docker compose up -d
                         '''
                     }
                 }
             }
+        }
+        // Exécuter les tests dans le conteneur movie_service
+        stage('Exécuter les tests dans movie_service') {
+            steps {
+                echo "Exécution des tests dans le conteneur movice_service..."
+                sh '''
+                    docker compose exec movie_service bash -c "PYTHONPATH=/app pytest /app/app/tests/test_movies.py --junitxml=/app/test-results.xml"
+                '''
+            }
+            post {
+                always {
+                    // Récupérer le fichier de résultats des tests
+                    sh '''
+                        docker compose cp movie_service:/app/test-results.xml ./test-results.xml
+                    '''
+                    // Publier les résultats des tests dans Jenkins
+                    junit 'test-results.xml'
+                }
+            }
+        }
+
+        // Nettoyage des conteneurs
+        stage('Nettoyer les conteneurs') {
+            echo "Arrêt et suppression des conteneurs..."
+            sh '''
+                docker compose down
+            '''
         }
     }
 }
