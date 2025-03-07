@@ -6,11 +6,12 @@ pipeline {
     stages {
         stage('Cloner le dépôt Git') {
             steps {
-                echo "Clonae du dépôt Git..."
+                echo "Clonage du dépôt Git..."
                 git branch: 'develop', url: 'https://github.com/josuekabangu/DATASCIENTEST-JENKINS-EXAMEN.git'
             }
         }
-        // Contruction des images Docker cast-service et movie-service
+
+        // Construction des images Docker
         stage('Construire les images Docker') {
             steps {
                 script {
@@ -20,16 +21,28 @@ pipeline {
                             echo "Connexion à Docker Hub..."
                             docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASS
                             echo "Construction des images..."
-                            docker compose up -d
+                            docker compose build
                         '''
                     }
                 }
             }
         }
+
+        // Démarrer les conteneurs
+        stage('Démarrer les conteneurs') {
+            steps {
+                echo "Démarrage des conteneurs avec docker-compose..."
+                sh '''
+                    docker compose up -d
+                    sleep 10 # Attendre que les services soient prêts
+                '''
+            }
+        }
+
         // Exécuter les tests dans le conteneur movie_service
         stage('Exécuter les tests dans movie_service') {
             steps {
-                echo "Exécution des tests dans le conteneur movice_service..."
+                echo "Exécution des tests dans le conteneur movie_service..."
                 sh '''
                     docker compose exec movie_service bash -c "PYTHONPATH=/app pytest /app/app/tests/test_movies.py --junitxml=/app/test-results.xml"
                 '''
@@ -48,10 +61,12 @@ pipeline {
 
         // Nettoyage des conteneurs
         stage('Nettoyer les conteneurs') {
-            echo "Arrêt et suppression des conteneurs..."
-            sh '''
-                docker compose down
-            '''
+            steps {
+                echo "Arrêt et suppression des conteneurs..."
+                sh '''
+                    docker compose down
+                '''
+            }
         }
     }
 }
