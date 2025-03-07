@@ -2,7 +2,10 @@ version: '3.7'
 
 services:
   movie_service:
-    build: ./movie-service
+    image: ajkabs/movie_service:v1
+    build: 
+      context: ./movie-service
+      dockerfile: Dockerfile 
     container_name: movie_service_container
     command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     volumes:
@@ -27,7 +30,10 @@ services:
       - POSTGRES_DB=movie_db_dev
 
   cast_service:
-    build: ./cast-service
+    image: ajkabs/cast_service:v1
+    build: 
+      context: ./cast-service
+      dockerfile: Dockerfile
     container_name: cast_service_container
     command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     volumes:
