@@ -79,6 +79,26 @@ pipeline {
             }
         }
 
+        // Étape de push des images Docker vers Docker Hub (uniquement si les tests réussissent)
+        stage('Pousser les images Docker') {
+            when {
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' } // Exécuter uniquement si les étapes précédentes ont réussi
+            }
+            steps {
+                echo "Les tests ont réussi. Pousser les images Docker vers Docker Hub..."
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASS')]) {
+                        sh '''
+                            echo "Connexion à Docker Hub..."
+                            docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASS
+                            echo "Pousser les images Docker..."
+                            docker compose push
+                        '''
+                    }
+                }
+            }
+        }
+
         // Nettoyage des conteneurs
         stage('Nettoyer les conteneurs') {
             steps {
@@ -87,6 +107,13 @@ pipeline {
                     docker compose down
                 '''
             }
+        }
+    }
+
+    // Gestion des échecs
+    post {
+        failure {
+            echo "Les tests ont échoué. Les images Docker ne seront pas poussées vers Docker Hub."
         }
     }
 }
