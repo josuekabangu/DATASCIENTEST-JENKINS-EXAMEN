@@ -59,6 +59,26 @@ pipeline {
             }
         }
 
+        // Exécuter les tests dans le conteneur cast_service
+        stage('Exécuter les tests dans cast_service') {
+            steps {
+                echo "Exécution des tests dans le conteneur cast_service..."
+                sh '''
+                    docker compose exec cast_service bash -c "PYTHONPATH=/app pytest /app/app/tests/test_casts.py --junitxml=/app/test-results.xml"
+                '''
+            }
+            post {
+                always {
+                    // Récupérer le fichier de résultats des tests
+                    sh '''
+                        docker compose cp cast_service:/app/test-results.xml ./test-results.xml
+                    '''
+                    // Publier les résultats des tests dans Jenkins
+                    junit 'test-results.xml'
+                }
+            }
+        }
+
         // Nettoyage des conteneurs
         stage('Nettoyer les conteneurs') {
             steps {
