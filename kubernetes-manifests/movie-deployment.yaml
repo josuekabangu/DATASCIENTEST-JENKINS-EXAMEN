@@ -1,0 +1,27 @@
+# kubernetes-manifests/movie-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: movie-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: movie-service
+  template:
+    metadata:
+      labels:
+        app: movie-service
+    spec:
+      containers:
+      - name: movie-service
+        image: ajkabs/movie_service:v1
+        command: ["uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URI
+          value: "postgresql://movie_db_username:movie_db_password@movie-db/movie_db_dev"
+        - name: CAST_SERVICE_HOST_URL
+          value: "http://cast-service:8000/api/v1/casts/"

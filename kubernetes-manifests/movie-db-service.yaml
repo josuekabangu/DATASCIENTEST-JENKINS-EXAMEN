@@ -1,0 +1,11 @@
+# kubernetes-manifests/cast-db-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: movie-db
+spec:
+  ports:
+  - port: 5432
+    targetPort: 5432
+  selector:
+    app: movie-db
