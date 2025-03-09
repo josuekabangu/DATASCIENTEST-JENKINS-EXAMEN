@@ -87,6 +87,7 @@ pipeline {
             steps {
                 script {
                     sh '''
+                        docker compose exec -it 
                         curl http://localhost:31631/api/v1/casts/docs
                         curl http://localhost:31023/api/v1/movies/docs
                     '''
@@ -132,7 +133,7 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        rm -RF .kube
+                        rm -rf .kube
                         mkdir .kube
                         cat $KUBECONFIG > .kube/config
                         cp helm/cast-chart/values.yaml values.yml
