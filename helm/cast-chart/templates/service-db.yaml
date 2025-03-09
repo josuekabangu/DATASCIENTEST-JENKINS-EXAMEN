@@ -1,0 +1,11 @@
+# cast-chart/templates/service-db.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: cast-db
+spec:
+  ports:
+  - port: {{ .Values.service_db.port }}
+    targetPort: {{ .Values.service_db.targetport }}
+  selector:
+    app: cast-db

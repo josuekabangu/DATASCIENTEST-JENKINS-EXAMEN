@@ -1,0 +1,14 @@
+# cast-chart/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: cast-service
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  - name: "8002"
+    port: {{ .Values.service.port }}
+    targetPort: {{ .Values.service.targetport }}
+    nodePort: {{ .Values.service.nodeport }}
+  selector:
+    app: cast-service

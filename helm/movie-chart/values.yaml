@@ -1,0 +1,32 @@
+# movie-chart/values.yaml
+replicas_count: 1
+
+deployment:
+  image:
+    repository: ajkabs/movie_service
+    tag: v1
+    pullPolicy: IfNotPresent
+
+  env:
+    DATABASE_URI: "postgresql://movie_db_username:movie_db_password@movie-db/movie_db_dev"
+    CAST_SERVICE_HOST_URL: "http://cast-service:8000/api/v1/casts/"
+
+service:
+  type: NodePort
+  port: 8001
+  targetport: 8000
+  nodeport: 31023
+
+statefulset:
+  env:
+    POSTGRES_USER: movie_db_username
+    POSTGRES_PASSWORD: movie_db_password
+    POSTGRES_DB: movie_db_dev
+    PGDATA: "/var/lib/postgresql/data/pgdata"
+  
+  volumeMounts:
+    mountPath: "/var/lib/postgresql/data"
+
+service_db:
+  port: 5432
+  targetport: 5432

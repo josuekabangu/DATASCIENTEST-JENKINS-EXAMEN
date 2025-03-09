@@ -1,0 +1,31 @@
+# cast-chart/values.yaml
+replicas_count: 1
+
+deployment:
+  image:
+    repository: ajkabs/cast_service
+    tag: v1
+    pullPolicy: IfNotPresent
+
+  env:
+    DATABASE_URI: "postgresql://cast_db_username:cast_db_password@cast-db/cast_db_dev"
+
+service:
+  type: NodePort
+  port: 8002
+  targetport: 8000
+  nodeport: 31631
+
+statefulset:
+  env:
+    POSTGRES_USER: cast_db_username
+    POSTGRES_PASSWORD: cast_db_password
+    POSTGRES_DB: cast_db_dev
+    PGDATA: "/var/lib/postgresql/data/pgdata"
+  
+  volumeMounts:
+    mountPath: "/var/lib/postgresql/data"
+
+service_db:
+  port: 5432
+  targetport: 5432

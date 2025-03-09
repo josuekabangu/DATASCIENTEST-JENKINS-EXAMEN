@@ -1,0 +1,42 @@
+# movie-chart/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: movie-db
+spec:
+  serviceName: "movie-db"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: movie-db
+  template:
+    metadata:
+      labels:
+        app: movie-db
+    spec:
+      containers:
+        - name: movie-db
+          image: postgres:12.1-alpine
+          env:
+            - name: POSTGRES_USER
+              value: "{{ .Values.statefulset.env.POSTGRES_USER }}"
+            - name: POSTGRES_PASSWORD
+              value: "{{ .Values.statefulset.env.POSTGRES_PASSWORD }}"
+            - name: POSTGRES_DB
+              value: "{{ .Values.statefulset.env.POSTGRES_DB }}"
+            - name: PGDATA
+              value: "{{ .Values.statefulset.env.PGDATA }}"
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: movie-db-data
+              mountPath: "{{ .Values.statefulset.volumeMounts.mountPath }}"
+  volumeClaimTemplates:
+    - metadata:
+        name: movie-db-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+

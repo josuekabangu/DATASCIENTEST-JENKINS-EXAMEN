@@ -2,6 +2,7 @@ pipeline {
     agent any
     environment {
         DOCKER_HUB_CREDS = credentials('docker-hub-creds') // Utilisation de l'ID du credential créé
+        DOCKER_TAG = "v${GIT_COMMIT}" // Définir le tag de l'image Docker basé sur le commit Git
     }
     stages {
         stage('Cloner le dépôt Git') {
@@ -34,7 +35,9 @@ pipeline {
                 echo "Démarrage des conteneurs avec docker-compose..."
                 sh '''
                     docker compose up -d
-                    sleep 10 # Attendre que les services soient prêts
+                    # Attente active pour s'assurer que les services sont prêts
+                    docker compose exec movie_service bash -c "while ! curl -s http://localhost:8000; do echo Waiting for movie_service; sleep 5; done"
+                    docker compose exec cast_service bash -c "while ! curl -s http://localhost:8000; do echo Waiting for cast_service; sleep 5; done"
                 '''
             }
         }
@@ -44,17 +47,17 @@ pipeline {
             steps {
                 echo "Exécution des tests dans le conteneur movie_service..."
                 sh '''
-                    docker compose exec movie_service bash -c "PYTHONPATH=/app pytest /app/app/tests/test_movies.py --junitxml=/app/test-results.xml"
+                    docker compose exec movie_service bash -c "PYTHONPATH=/app pytest /app/app/tests/test_movies.py --junitxml=/app/test-results-movie.xml"
                 '''
             }
             post {
                 always {
                     // Récupérer le fichier de résultats des tests
                     sh '''
-                        docker compose cp movie_service:/app/test-results.xml ./test-results.xml
+                        docker compose cp movie_service:/app/test-results-movie.xml ./test-results-movie.xml
                     '''
                     // Publier les résultats des tests dans Jenkins
-                    junit 'test-results.xml'
+                    junit '**/test-results-movie.xml'  // Publier les résultats des tests pour movie_service
                 }
             }
         }
@@ -64,17 +67,29 @@ pipeline {
             steps {
                 echo "Exécution des tests dans le conteneur cast_service..."
                 sh '''
-                    docker compose exec cast_service bash -c "PYTHONPATH=/app pytest /app/app/tests/test_casts.py --junitxml=/app/test-results.xml"
+                    docker compose exec cast_service bash -c "PYTHONPATH=/app pytest /app/app/tests/test_casts.py --junitxml=/app/test-results-cast.xml"
                 '''
             }
             post {
                 always {
                     // Récupérer le fichier de résultats des tests
                     sh '''
-                        docker compose cp cast_service:/app/test-results.xml ./test-results.xml
+                        docker compose cp cast_service:/app/test-results-cast.xml ./test-results-cast.xml
                     '''
                     // Publier les résultats des tests dans Jenkins
-                    junit 'test-results.xml'
+                    junit '**/test-results-cast.xml'  // Publier les résultats des tests pour cast_service
+                }
+            }
+        }
+
+        // Exécuter les tests pour l'accès au endpoint
+        stage('Exécuter les tests accès au endpoint') {
+            steps {
+                script {
+                    sh '''
+                        curl http://localhost:31631/api/v1/casts/docs
+                        curl http://localhost:31023/api/v1/movies/docs
+                    '''
                 }
             }
         }
@@ -104,8 +119,30 @@ pipeline {
             steps {
                 echo "Arrêt et suppression des conteneurs..."
                 sh '''
-                    docker compose down
+                    docker compose down --volumes --remove-orphans
                 '''
+            }
+        }
+
+        // Déploiement dans le namespace dev
+        stage('Deploiement en dev') {
+            environment {
+                KUBECONFIG = credentials("config")
+            }
+            steps {
+                script {
+                    sh '''
+                        rm -RF .kube
+                        mkdir .kube
+                        cat $KUBECONFIG > .kube/config
+                        cp helm/cast-chart/values.yaml values.yml
+                        sed -i "s+tag: ${DOCKER_TAG}+G" values.yml
+                        helm upgrade --install app cast-service --values=values.yml --namespace dev
+                        cp helm/movie-chart/values.yaml values.yml
+                        sed -i "s+tag: ${DOCKER_TAG}+G" values.yml
+                        helm upgrade --install app movie-service --values=values.yml --namespace dev
+                    '''
+                }
             }
         }
     }

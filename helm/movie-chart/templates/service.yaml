@@ -1,0 +1,14 @@
+# movie-chart/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: movie-service
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  - name: "8001"
+    port: {{ .Values.service.port }}
+    targetPort: {{ .Values.service.targetport }}
+    nodePort: {{ .Values.service.nodeport }}
+  selector:
+    app: movie-service
