@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   movie_service:
-    image: ajkabs/movie_service:v1
+    image: ajkabs/movie_service:v2
     build: 
       context: ./movie-service
       dockerfile: Dockerfile 
@@ -30,7 +30,7 @@ services:
       - POSTGRES_DB=movie_db_dev
 
   cast_service:
-    image: ajkabs/cast_service:v1
+    image: ajkabs/cast_service:v2
     build: 
       context: ./cast-service
       dockerfile: Dockerfile

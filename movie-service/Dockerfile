@@ -9,10 +9,9 @@ WORKDIR /app
 # Copier le fichier requirements.txt dans le répertoire de travail
 COPY ./requirements.txt /app/requirements.txt
 
-# Installer les dépendances système (gcc) nécessaires à l'installation des paquets Python
-RUN apt-get update \
-&& apt-get install gcc -y \
-&& apt-get clean
+# Installer les dépendances système (gcc, curl) et nettoyer les caches
+RUN apt-get update && apt-get install -y gcc curl && \
+    apt-get clean
 
 # Installer les dépendances Python à partir de requirements.txt
 RUN pip install -r /app/requirements.txt \

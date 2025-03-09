@@ -4,7 +4,7 @@ replicas_count: 1
 deployment:
   image:
     repository: ajkabs/movie_service
-    tag: v1
+    tag: v2
     pullPolicy: IfNotPresent
 
   env:
