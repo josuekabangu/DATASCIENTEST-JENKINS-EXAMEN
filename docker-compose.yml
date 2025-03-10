@@ -1,5 +1,3 @@
-version: '3.7'
-
 services:
   movie_service:
     image: ajkabs/movie_service:v2
