@@ -39,7 +39,7 @@ pipeline {
                             echo "Connexion à Docker Hub..."
                             docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASS
                             echo "Construction des images..."
-                            docker compose build
+                            docker-compose build
                         '''
                     }
                 }
@@ -51,9 +51,9 @@ pipeline {
             steps {
                 echo "Exécution des tests..."
                 sh '''
-                    docker compose up -d
-                    docker compose exec movie_service pytest /app/app/tests/test_movies.py --junitxml=/app/test-results-movie.xml
-                    docker compose exec cast_service pytest /app/app/tests/test_casts.py --junitxml=/app/test-results-cast.xml
+                    docker-compose up -d
+                    docker-compose exec movie_service pytest /app/app/tests/test_movies.py --junitxml=/app/test-results-movie.xml
+                    docker-compose exec cast_service pytest /app/app/tests/test_casts.py --junitxml=/app/test-results-cast.xml
                 '''
                 junit '**/test-results-*.xml' // Publier les résultats des tests
             }
@@ -72,7 +72,7 @@ pipeline {
                             echo "Connexion à Docker Hub..."
                             docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASS
                             echo "Pousser les images Docker..."
-                            docker compose push
+                            docker-compose push
                         '''
                     }
                 }
@@ -104,11 +104,15 @@ pipeline {
             }
         }
 
-        // Étape 6 : Déploiement en production (manuel)
+        // Étape 6 : Déploiement en Production (manuel)
         stage('Déploiement en Production') {
             when {
                 branch 'main'
-                input message: 'Déployer en production ?', ok: 'Oui'
+            }
+            steps {
+                script {
+                    input message: 'Déployer en production ?', ok: 'Oui'
+                }
             }
             environment {
                 KUBECONFIG = credentials("config")
