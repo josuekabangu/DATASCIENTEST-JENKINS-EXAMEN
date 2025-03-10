@@ -36,8 +36,8 @@ pipeline {
                 sh '''
                     docker compose up -d
                     # Attente active pour s'assurer que les services sont prêts
-                    docker compose exec movie_service bash -c "while ! curl -s http://localhost:8000; do echo Waiting for movie_service; sleep 5; done"
-                    docker compose exec cast_service bash -c "while ! curl -s http://localhost:8000; do echo Waiting for cast_service; sleep 5; done"
+                    docker compose exec movie_service bash -c "while ! curl -s http://localhost:8001/api/v1/movies/docs; do echo Waiting for movie_service; sleep 5; done"
+                    docker compose exec cast_service bash -c "while ! curl -s http://localhost:8002/api/v1/casts/docs; do echo Waiting for cast_service; sleep 5; done"
                 '''
             }
         }
