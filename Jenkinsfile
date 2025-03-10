@@ -109,16 +109,12 @@ pipeline {
             when {
                 branch 'main'
             }
-            steps {
-                script {
-                    input message: 'Déployer en production ?', ok: 'Oui'
-                }
-            }
             environment {
                 KUBECONFIG = credentials("config")
             }
             steps {
                 script {
+                    input message: 'Déployer en production ?', ok: 'Oui'
                     sh '''
                         rm -rf .kube
                         mkdir .kube
