@@ -136,12 +136,12 @@ pipeline {
                         # Déployment du cast-service
                         cp helm/cast-chart/values.yaml values.yml
                         sed -i "s#tag: ${DOCKER_TAG}#G#" values.yml
-                        helm install cast-service helm/cast-chart/ -n dev
+                        helm upgrade --install cast-service helm/cast-chart/ -n dev
 
                         # Déployment du movie-service
                         cp helm/movie-chart/values.yaml values.yml
                         sed -i "s#tag: ${DOCKER_TAG}#G#" values.yml
-                        helm install movie-service helm/movie-chart/ -n dev
+                        helm upgrade --install movie-service helm/movie-chart/ -n dev
                     '''
                 }
             }
