@@ -87,7 +87,6 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        docker compose exec -it 
                         curl http://localhost:31631/api/v1/casts/docs
                         curl http://localhost:31023/api/v1/movies/docs
                     '''

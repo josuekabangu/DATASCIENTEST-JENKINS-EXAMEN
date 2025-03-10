@@ -25,4 +25,3 @@ spec:
           value: {{ .Values.deployment.env.DATABASE_URI | quote }}
         - name: CAST_SERVICE_HOST_URL
           value: {{ .Values.deployment.env.CAST_SERVICE_HOST_URL | quote }}
-

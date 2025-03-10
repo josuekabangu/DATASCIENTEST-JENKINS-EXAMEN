@@ -10,6 +10,7 @@ spec:
       app: cast-service
   template:
     metadata:
+      name: cast-service-pod
       labels:
         app: cast-service
     spec:
