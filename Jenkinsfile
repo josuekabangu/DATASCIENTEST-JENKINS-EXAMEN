@@ -135,11 +135,15 @@ pipeline {
                         rm -rf .kube
                         mkdir .kube
                         cat $KUBECONFIG > .kube/config
+
+                        # Déployment du cast-service
                         cp helm/cast-chart/values.yaml values.yml
-                        sed -i "s+tag: ${DOCKER_TAG}+G" values.yml
+                        sed -i "s#tag: ${DOCKER_TAG}#G#" values.yml
                         helm upgrade --install app cast-service --values=values.yml --namespace dev
+
+                        # Déployment du movie-service
                         cp helm/movie-chart/values.yaml values.yml
-                        sed -i "s+tag: ${DOCKER_TAG}+G" values.yml
+                        sed -i "s#tag: ${DOCKER_TAG}#G#" values.yml
                         helm upgrade --install app movie-service --values=values.yml --namespace dev
                     '''
                 }
