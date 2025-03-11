@@ -129,10 +129,10 @@ pipeline {
                         cat $KUBECONFIG > .kube/config
 
                         # Déploiement du cast-service                        
-                        helm upgrade --install cast-service helm/cast-chart/ -n ${KUBE_NAMESPACE} --set image.tag=${DOCKER_TAG}
+                        helm upgrade --install cast-service helm/cast-chart/ -n ${KUBE_NAMESPACE} 
 
                         # Déploiement du movie-service           
-                        helm upgrade --install movie-service helm/movie-chart/ -n ${KUBE_NAMESPACE} --set image.tag=${DOCKER_TAG}
+                        helm upgrade --install movie-service helm/movie-chart/ -n ${KUBE_NAMESPACE} 
                     '''
                 }
             }
@@ -149,7 +149,7 @@ pipeline {
             steps {
                 // Demande de confirmation manuelle avant de déployer en production
                 input message: 'Déployer en production ?', ok: 'Oui'
-                
+
                 script {
                     sh '''
                         rm -rf .kube
@@ -157,10 +157,10 @@ pipeline {
                         cat $KUBECONFIG > .kube/config
 
                         # Déploiement du cast-service                        
-                        helm upgrade --install cast-service helm/cast-chart/ -n prod --set image.tag=${DOCKER_TAG}
+                        helm upgrade --install cast-service helm/cast-chart/ -n prod 
 
                         # Déploiement du movie-service           
-                        helm upgrade --install movie-service helm/movie-chart/ -n prod --set image.tag=${DOCKER_TAG}
+                        helm upgrade --install movie-service helm/movie-chart/ -n prod 
                     '''
                 }
             }
