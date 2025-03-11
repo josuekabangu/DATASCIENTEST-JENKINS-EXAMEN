@@ -145,8 +145,7 @@ pipeline {
             }
             when {
                 branch 'main'
-                input message: 'Déployer en production ?'
-                ok: 'Oui'
+                input message: 'Déployer en production ?', ok: 'Oui'
             }
             steps {
                 script {
