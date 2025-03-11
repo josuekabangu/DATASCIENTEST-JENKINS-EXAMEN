@@ -123,6 +123,10 @@ pipeline {
             }
             steps {
                 script {
+                    // Vérification si KUBE_NAMESPACE est vide
+                    if (!env.KUBE_NAMESPACE) {
+                        error("La variable KUBE_NAMESPACE est vide. Le déploiement ne peut pas continuer.")
+                    }
                     sh '''
                         rm -rf .kube
                         mkdir .kube
