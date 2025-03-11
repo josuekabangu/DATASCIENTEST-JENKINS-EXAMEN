@@ -145,9 +145,11 @@ pipeline {
             }
             when {
                 branch 'main'
-                input message: 'Déployer en production ?', ok: 'Oui'
             }
             steps {
+                // Demande de confirmation manuelle avant de déployer en production
+                input message: 'Déployer en production ?', ok: 'Oui'
+                
                 script {
                     sh '''
                         rm -rf .kube
