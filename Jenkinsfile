@@ -3,7 +3,7 @@ pipeline {
     environment {
         DOCKER_HUB_CREDS = credentials('docker-hub-creds') // Utilisation de l'ID du credential créé
         DOCKER_TAG = "v${GIT_COMMIT}" // Définir le tag de l'image Docker basé sur le commit Git
-        KUBE_NAMESPACE = "" // Namespace dynamique
+        KUBE_NAMESPACE = "" // Namespace dynamique (sera défini en fonction de la branche)
     }
     stages {
         // Étape 1 : Clonage du dépôt Git
@@ -19,7 +19,7 @@ pipeline {
                     } else if (env.BRANCH_NAME == 'AQ') {
                         env.KUBE_NAMESPACE = 'qa'
                     } else if (env.BRANCH_NAME == 'staging') {
-                        env.KUBE_NAMESPACE = 'staging' // Correction de "stading" en "staging"
+                        env.KUBE_NAMESPACE = 'staging'
                     } else if (env.BRANCH_NAME == 'main') {
                         env.KUBE_NAMESPACE = 'prod'
                     } else {
@@ -64,6 +64,7 @@ pipeline {
                     // Récupérer le fichier de résultats des tests
                     sh '''
                         docker compose cp movie_service:/app/test-results-movie.xml ./test-results-movie.xml
+                        docker compose cp cast_service:/app/test-results-cast.xml ./test-results-cast.xml
                     '''
                     // Publier les résultats des tests dans Jenkins
                     junit '**/test-results*.xml'  // Publier les résultats des tests
@@ -116,7 +117,7 @@ pipeline {
         // Étape 7 : Déploiement dans Kubernetes
         stage('Deploiement dans Kubernetes') {
             environment {
-                KUBECONFIG = credentials("config")
+                KUBECONFIG = credentials("config") // Utilisation des credentials pour le fichier kubeconfig
             }
             when {
                 expression { env.BRANCH_NAME == 'develop' || env.BRANCH_NAME == 'AQ' || env.BRANCH_NAME == 'staging' }
@@ -127,7 +128,9 @@ pipeline {
                     if (!env.KUBE_NAMESPACE) {
                         error("La variable KUBE_NAMESPACE est vide. Le déploiement ne peut pas continuer.")
                     }
+                    echo "Déploiement dans le namespace : ${env.KUBE_NAMESPACE}"
                     sh '''
+                        echo "KUBE_NAMESPACE=${KUBE_NAMESPACE}"
                         rm -rf .kube
                         mkdir .kube
                         cat $KUBECONFIG > .kube/config
@@ -145,7 +148,7 @@ pipeline {
         // Étape 8 : Déploiement en production (manuel)
         stage('Déploiement en Production') {
             environment {
-                KUBECONFIG = credentials("config")
+                KUBECONFIG = credentials("config") // Utilisation des credentials pour le fichier kubeconfig
             }
             when {
                 branch 'main'
