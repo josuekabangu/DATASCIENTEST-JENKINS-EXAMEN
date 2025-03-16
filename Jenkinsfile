@@ -14,17 +14,17 @@ pipeline {
                 
                 script {
                     // Définition du namespace Kubernetes en fonction de la branche
-                    def KUBE_NAMESPACE = [
+                    def KUBE_NAMESPACE_MAP = [
                         'develop': 'dev',
                         'AQ': 'qa',
                         'staging': 'staging',
                         'main': 'prod'
                     ]
                     // Assignation dynamique de KUBE_NAMESPACE depuis la map
-                    if (KUBE_NAMESPACE.containsKey(env.BRANCH_NAME)) {
-                        env.KUBE_NAMESPACE = KUBE_NAMESPACE[env.BRANCH_NAME]
+                    if (KUBE_NAMESPACE_MAP.containsKey(env.BRANCH_NAME)) {
+                        env.KUBE_NAMESPACE = KUBE_NAMESPACE_MAP[env.BRANCH_NAME]
                     } else {
-                        error("Branche non supportée : ${BRANCH_NAME}")
+                        error("Branche non supportée : ${env.BRANCH_NAME}")
                     }
                     echo "Namespace Kubernetes détecté : ${env.KUBE_NAMESPACE}"
                 }
@@ -81,8 +81,8 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        curl http://localhost:8002/api/v1/casts/docs
-                        curl http://localhost:8001/api/v1/movies/docs
+                        curl http://localhost:31631/api/v1/casts/docs
+                        curl http://localhost:31023/api/v1/movies/docs
                     '''
                 }
             }
@@ -128,6 +128,10 @@ pipeline {
             }
             steps {
                 script {
+                    // Vérification que KUBE_NAMESPACE est défini
+                    if (!env.KUBE_NAMESPACE?.trim()) {
+                        error("La variable KUBE_NAMESPACE est vide. Le déploiement ne peut pas continuer.")
+                    }
                     echo "Déploiement dans le namespace : ${env.KUBE_NAMESPACE}"
                     sh '''
                         echo "KUBE_NAMESPACE=${KUBE_NAMESPACE}"
