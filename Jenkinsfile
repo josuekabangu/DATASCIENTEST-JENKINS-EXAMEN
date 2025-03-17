@@ -1,9 +1,9 @@
 pipeline {
     agent any
     environment {
-        DOCKER_HUB_CREDS = credentials('docker-hub-creds') // Utilisation de l'ID du credential créé
-        DOCKER_TAG = "v${GIT_COMMIT}" // Définir le tag de l'image Docker basé sur le commit Git
-        KUBECONFIG = credentials("config") // Utilisation des credentials pour le fichier kubeconfig
+        DOCKER_HUB_CREDS = credentials('docker-hub-creds')  // Utilisation de l'ID du credential créé
+        DOCKER_TAG = "v${GIT_COMMIT}"  // Définir le tag de l'image Docker basé sur le commit Git
+        KUBECONFIG = credentials("config")  // Utilisation des credentials pour le fichier kubeconfig
     }
     stages {
         // Étape 1 : Clonage du dépôt Git
@@ -19,7 +19,16 @@ pipeline {
             steps {
                 script {
                     echo "Construction des images Docker avec docker-compose..."
-                           junit 'test-results-movie.xml'
+  d movie_service
+                                sleep 10
+                                docker compose exec movie_service bash -c "PYTHONPATH=/app pytest /app/app/tests/test_movies.py --junitxml=/app/test-results-movie.xml"
+                            '''
+                        }
+                    }
+                    post {
+                        always {
+                            sh 'docker compose cp movie_service:/app/test-results-movie.xml ./test-results-movie.xml'
+                            junit 'test-results-movie.xml'
                         }
                     }
                 }
@@ -117,7 +126,6 @@ pipeline {
             }
         }
 
-        // Étape 8 : Déploiement QA
         stage('Déploiement QA') {
             when {
                 branch 'AQ'
@@ -144,7 +152,6 @@ pipeline {
             }
         }
 
-        // Étape 9 : Déploiement Staging
         stage('Déploiement Staging') {
             when {
                 branch 'staging'
@@ -171,7 +178,7 @@ pipeline {
             }
         }
 
-        // Étape 10 : Déploiement en production (manuel)
+        // Étape 8 : Déploiement en production (manuel)
         stage('Déploiement en Production') {
             when {
                 branch 'main'
@@ -214,7 +221,14 @@ pipeline {
         }
     }
 }
-               // Code de construction Docker
+                  withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASS')]) {
+                        sh '''
+                            echo "Connexion à Docker Hub..."
+                            docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASS
+                            echo "Construction des images..."
+                            docker compose build
+                        '''
+                    }
                 }
             }
         }
@@ -226,13 +240,4 @@ pipeline {
                     steps {
                         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                             sh '''
-                                docker compose up -d movie_service
-                                sleep 10
-                                docker compose exec movie_service bash -c "PYTHONPATH=/app pytest /app/app/tests/test_movies.py --junitxml=/app/test-results-movie.xml"
-                            '''
-                        }
-                    }
-                    post {
-                        always {
-                            sh 'docker compose cp movie_service:/app/test-results-movie.xml ./test-results-movie.xml'
-      
+                                docker compose up -
