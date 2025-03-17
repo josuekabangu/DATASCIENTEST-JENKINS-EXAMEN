@@ -1,32 +1,25 @@
-               withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASS')]) {
-                        sh '''
-                            echo "Connexion à Docker Hub..."
-                            docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASS
-                            echo "Construction des images..."
-                            docker compose build
-                        '''
-                    }
-                }
+pipeline {
+    agent any
+    environment {
+        DOCKER_HUB_CREDS = credentials('docker-hub-creds') // Utilisation de l'ID du credential créé
+        DOCKER_TAG = "v${GIT_COMMIT}" // Définir le tag de l'image Docker basé sur le commit Git
+        KUBECONFIG = credentials("config") // Utilisation des credentials pour le fichier kubeconfig
+    }
+    stages {
+        // Étape 1 : Clonage du dépôt Git
+        stage('Cloner le dépôt Git') {
+            steps {
+                echo "Clonage du dépôt Git..."
+                git branch: "${BRANCH_NAME}", url: 'https://github.com/josuekabangu/DATASCIENTEST-JENKINS-EXAMEN.git'
             }
         }
 
-        // Étape 3 : Exécution des tests dans le conteneur movie_service
-        stage('Exécuter les tests') {
-            parallel {
-                stage('Tests movie_service') {
-                    steps {
-                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                            sh '''
-                                docker compose up -d movie_service
-                                sleep 10
-                                docker compose exec movie_service bash -c "PYTHONPATH=/app pytest /app/app/tests/test_movies.py --junitxml=/app/test-results-movie.xml"
-                            '''
-                        }
-                    }
-                    post {
-                        always {
-                            sh 'docker compose cp movie_service:/app/test-results-movie.xml ./test-results-movie.xml'
-                            junit 'test-results-movie.xml'
+        // Étape 2 : Construction des images Docker
+        stage('Construction des images Docker') {
+            steps {
+                script {
+                    echo "Construction des images Docker avec docker-compose..."
+                           junit 'test-results-movie.xml'
                         }
                     }
                 }
@@ -124,6 +117,7 @@
             }
         }
 
+        // Étape 8 : Déploiement QA
         stage('Déploiement QA') {
             when {
                 branch 'AQ'
@@ -150,6 +144,7 @@
             }
         }
 
+        // Étape 9 : Déploiement Staging
         stage('Déploiement Staging') {
             when {
                 branch 'staging'
@@ -176,28 +171,7 @@
             }
         }
 
-        // Étape 8 : Dpipeline {
-    agent any
-    environment {
-        DOCKER_HUB_CREDS = credentials('docker-hub-creds') // Utilisation de l'ID du credential créé
-        DOCKER_TAG = "v${GIT_COMMIT}" // Définir le tag de l'image Docker basé sur le commit Git
-        KUBECONFIG = credentials("config") // Utilisation des credentials pour le fichier kubeconfig
-    }
-    stages {
-        // Étape 1 : Clonage du dépôt Git
-        stage('Cloner le dépôt Git') {
-            steps {
-                echo "Clonage du dépôt Git..."
-                git branch: "${BRANCH_NAME}", url: 'https://github.com/josuekabangu/DATASCIENTEST-JENKINS-EXAMEN.git'
-            }
-        }
-
-        // Étape 2 : Construction des images Docker
-        stage('Construction des images Docker') {
-            steps {
-                script {
-                    echo "Construction des images Docker avec docker-compose..."
-     éploiement en production (manuel)
+        // Étape 10 : Déploiement en production (manuel)
         stage('Déploiement en Production') {
             when {
                 branch 'main'
@@ -240,3 +214,25 @@
         }
     }
 }
+               // Code de construction Docker
+                }
+            }
+        }
+
+        // Étape 3 : Exécution des tests dans le conteneur movie_service
+        stage('Exécuter les tests') {
+            parallel {
+                stage('Tests movie_service') {
+                    steps {
+                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                            sh '''
+                                docker compose up -d movie_service
+                                sleep 10
+                                docker compose exec movie_service bash -c "PYTHONPATH=/app pytest /app/app/tests/test_movies.py --junitxml=/app/test-results-movie.xml"
+                            '''
+                        }
+                    }
+                    post {
+                        always {
+                            sh 'docker compose cp movie_service:/app/test-results-movie.xml ./test-results-movie.xml'
+      
